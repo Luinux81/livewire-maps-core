@@ -1,6 +1,7 @@
 name: CI Tests
 
 on:
+  workflow_dispatch: # Permite ejecución manual
   push:
     branches: [ main ] # Solo se ejecuta cuando subes cambios a main
 
