@@ -9,19 +9,27 @@ class LivewireMap extends Component
 {
     // Propiedades públicas
     public ?float $latitude = null;
+
     public ?float $longitude = null;
+
     public bool $interactive = true;
+
     public bool $showLabel = true;
+
     public bool $showPasteButton = false;
+
     public int $height = 400;
+
     public int $zoom = 15;
 
     // Propiedades internas
     public bool $showCoordinateInput = false;
+
     public string $coordinateInput = '';
 
     // Coordenadas por defecto
     private const DEFAULT_LAT = 36.9990019;
+
     private const DEFAULT_LNG = -6.5478919;
 
     protected function casts(): array
@@ -39,6 +47,7 @@ class LivewireMap extends Component
     {
         if ($value === null || $value === '') {
             $this->latitude = null;
+
             return;
         }
 
@@ -64,6 +73,7 @@ class LivewireMap extends Component
     {
         if ($value === null || $value === '') {
             $this->longitude = null;
+
             return;
         }
 
@@ -103,7 +113,7 @@ class LivewireMap extends Component
 
     public function updateCoordinates(float $lat, float $lng): void
     {
-        if (!$this->interactive) {
+        if (! $this->interactive) {
             return;
         }
 
@@ -113,18 +123,18 @@ class LivewireMap extends Component
         // Emitir evento para que el componente padre pueda escuchar
         $this->dispatch('map-coordinates-updated', [
             'latitude' => $this->latitude,
-            'longitude' => $this->longitude
+            'longitude' => $this->longitude,
         ]);
     }
 
     public function toggleCoordinateInput(): void
     {
-        $this->showCoordinateInput = !$this->showCoordinateInput;
+        $this->showCoordinateInput = ! $this->showCoordinateInput;
     }
 
     public function applyCoordinates(): void
     {
-        if (!$this->interactive) {
+        if (! $this->interactive) {
             return;
         }
 
@@ -132,6 +142,7 @@ class LivewireMap extends Component
 
         if (count($parts) !== 2) {
             $this->addError('coordinateInput', 'Formato inválido. Usa: latitud, longitud');
+
             return;
         }
 
@@ -140,11 +151,13 @@ class LivewireMap extends Component
 
         if ($lat === false || $lng === false) {
             $this->addError('coordinateInput', 'Las coordenadas deben ser números válidos');
+
             return;
         }
 
         if ($lat < -90 || $lat > 90 || $lng < -180 || $lng > 180) {
             $this->addError('coordinateInput', 'Coordenadas fuera de rango válido');
+
             return;
         }
 
@@ -156,7 +169,7 @@ class LivewireMap extends Component
         // Emitir evento para que Alpine actualice el mapa
         $this->dispatch('fly-to-coordinates', [
             'latitude' => $this->latitude,
-            'longitude' => $this->longitude
+            'longitude' => $this->longitude,
         ]);
     }
 

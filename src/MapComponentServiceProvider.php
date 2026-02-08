@@ -14,11 +14,11 @@ class MapComponentServiceProvider extends ServiceProvider
 
         // Publicar las vistas
         $this->publishes([
-            __DIR__ . '/../resources/views' => $this->app->resourcePath('views/vendor/lbcdev-map'),
+            __DIR__.'/../resources/views' => $this->app->resourcePath('views/vendor/lbcdev-map'),
         ], 'lbcdev-map-views');
 
         // Cargar las vistas
-        $this->loadViewsFrom(__DIR__ . '/../resources/views', 'lbcdev-map');
+        $this->loadViewsFrom(__DIR__.'/../resources/views', 'lbcdev-map');
     }
 
     public function register(): void
