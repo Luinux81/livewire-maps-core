@@ -5,7 +5,9 @@
         lat: {{ $this->displayLatitude }},
         lng: {{ $this->displayLongitude }},
         interactive: {{ $interactive ? 'true' : 'false' }},
-        zoom: {{ $zoom }}
+        zoom: {{ $zoom }},
+        markers: @js($this->markersData),
+        multiMarkerMode: {{ $this->isMultiMarkerMode() ? 'true' : 'false' }}
     })"
     x-init="initMap()"
     @fly-to-coordinates.window="flyToCoordinates($event.detail)"
@@ -84,7 +86,8 @@
 Alpine.data('mapComponentAlpine', (config) => ({
     map: null,
     marker: null,
-    
+    markers: [],
+
     initMap() {
         // Verificar que Leaflet esté disponible
         if (typeof L === 'undefined') {
@@ -113,13 +116,22 @@ Alpine.data('mapComponentAlpine', (config) => ({
             attribution: '© OpenStreetMap contributors'
         }).addTo(this.map);
 
-        // Crear marcador
-        this.marker = L.marker([config.lat, config.lng], {
-            draggable: config.interactive
+        // Renderizar markers según el modo
+        if (config.multiMarkerMode) {
+            this.renderMultipleMarkers(config.markers);
+        } else {
+            this.renderSingleMarker(config.lat, config.lng, config.interactive);
+        }
+    },
+
+    renderSingleMarker(lat, lng, interactive) {
+        // Crear marcador único (modo legacy)
+        this.marker = L.marker([lat, lng], {
+            draggable: interactive
         }).addTo(this.map);
 
         // Eventos solo si es interactivo
-        if (config.interactive) {
+        if (interactive) {
             // Click en el mapa
             this.map.on('click', (e) => {
                 this.updatePosition(e.latlng.lat, e.latlng.lng);
@@ -130,6 +142,43 @@ Alpine.data('mapComponentAlpine', (config) => ({
                 const pos = e.target.getLatLng();
                 this.updatePosition(pos.lat, pos.lng);
             });
+        }
+    },
+
+    renderMultipleMarkers(markersData) {
+        // Limpiar markers existentes
+        this.markers.forEach(m => m.remove());
+        this.markers = [];
+
+        if (!markersData || markersData.length === 0) {
+            return;
+        }
+
+        // Crear markers
+        markersData.forEach((markerData) => {
+            const marker = L.marker([markerData.lat, markerData.lng], {
+                draggable: false,
+                ...markerData.options
+            });
+
+            // Añadir label/popup si existe
+            if (markerData.label) {
+                marker.bindPopup(markerData.label);
+            }
+
+            // Añadir tooltip si existe
+            if (markerData.tooltip) {
+                marker.bindTooltip(markerData.tooltip);
+            }
+
+            marker.addTo(this.map);
+            this.markers.push(marker);
+        });
+
+        // Ajustar vista para mostrar todos los markers
+        if (this.markers.length > 0) {
+            const group = L.featureGroup(this.markers);
+            this.map.fitBounds(group.getBounds().pad(0.1));
         }
     },
 

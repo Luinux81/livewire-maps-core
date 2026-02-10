@@ -3,14 +3,21 @@
 namespace LBCDev\LivewireMaps\Components;
 
 use Illuminate\Support\Facades\View;
+use LBCDev\MapGeometries\Marker;
+use LBCDev\MapGeometries\MarkerCollection;
 use Livewire\Component;
 
 class LivewireMap extends Component
 {
-    // Propiedades públicas
+    // Propiedades públicas (legacy - mantener por compatibilidad)
     public ?float $latitude = null;
 
     public ?float $longitude = null;
+
+    // Nuevas propiedades para geometries
+    public ?Marker $marker = null;
+
+    public ?MarkerCollection $markers = null;
 
     public bool $interactive = true;
 
@@ -93,17 +100,35 @@ class LivewireMap extends Component
     }
 
     public function mount(
-        $latitude = null,  // Cambiar tipo para aceptar string o float
-        $longitude = null, // Cambiar tipo para aceptar string o float
+        $latitude = null,  // Legacy: acepta string o float
+        $longitude = null, // Legacy: acepta string o float
+        ?Marker $marker = null, // Nuevo: acepta un Marker
+        ?MarkerCollection $markers = null, // Nuevo: acepta MarkerCollection
         bool $interactive = true,
         bool $showLabel = true,
         bool $showPasteButton = false,
         int $height = 400,
         int $zoom = 15
     ): void {
-        // Usar los setters para convertir automáticamente
-        $this->setLatitudeProperty($latitude);
-        $this->setLongitudeProperty($longitude);
+        // Prioridad: markers > marker > latitude/longitude (legacy)
+        if ($markers !== null) {
+            $this->markers = $markers;
+        } elseif ($marker !== null) {
+            $this->marker = $marker;
+            // Sincronizar con propiedades legacy
+            $this->latitude = $marker->getLatitude();
+            $this->longitude = $marker->getLongitude();
+        } else {
+            // Modo legacy: usar lat/lng directos
+            $this->setLatitudeProperty($latitude);
+            $this->setLongitudeProperty($longitude);
+
+            // Si hay coordenadas, crear un marker automáticamente
+            if ($this->latitude !== null && $this->longitude !== null) {
+                $this->marker = Marker::make($this->latitude, $this->longitude);
+            }
+        }
+
         $this->interactive = $interactive;
         $this->showLabel = $showLabel;
         $this->showPasteButton = $showPasteButton;
@@ -119,6 +144,21 @@ class LivewireMap extends Component
 
         $this->latitude = round($lat, 6);
         $this->longitude = round($lng, 6);
+
+        // Actualizar o crear marker
+        if ($this->marker !== null) {
+            // Si ya existe un marker, crear uno nuevo con las coordenadas actualizadas
+            // (los markers son inmutables por diseño)
+            $this->marker = Marker::make($this->latitude, $this->longitude)
+                ->label($this->marker->getLabel())
+                ->tooltip($this->marker->getTooltip())
+                ->icon($this->marker->getIcon())
+                ->iconColor($this->marker->getIconColor())
+                ->options($this->marker->getOptions())
+                ->metadata($this->marker->getMetadata());
+        } else {
+            $this->marker = Marker::make($this->latitude, $this->longitude);
+        }
 
         // Emitir evento para que el componente padre pueda escuchar
         $this->dispatch('map-coordinates-updated', [
@@ -189,12 +229,112 @@ class LivewireMap extends Component
     }
 
     /**
+     * Check if component is in multi-marker mode
+     */
+    public function isMultiMarkerMode(): bool
+    {
+        return $this->markers !== null && ! $this->markers->isEmpty();
+    }
+
+    /**
+     * Check if component has a single marker
+     */
+    public function hasSingleMarker(): bool
+    {
+        return $this->marker !== null;
+    }
+
+    /**
+     * Get the current marker (single mode)
+     */
+    public function getMarker(): ?Marker
+    {
+        return $this->marker;
+    }
+
+    /**
+     * Get all markers (multi mode)
+     */
+    public function getMarkers(): ?MarkerCollection
+    {
+        return $this->markers;
+    }
+
+    /**
+     * Add a marker to the collection (switches to multi-marker mode)
+     */
+    public function addMarker(Marker $marker): void
+    {
+        if ($this->markers === null) {
+            $this->markers = MarkerCollection::make();
+
+            // Si había un marker único, añadirlo a la colección
+            if ($this->marker !== null) {
+                $this->markers->add($this->marker);
+                $this->marker = null;
+            }
+        }
+
+        $this->markers->add($marker);
+    }
+
+    /**
+     * Remove a marker from the collection by index
+     */
+    public function removeMarker(int $index): void
+    {
+        if ($this->markers !== null) {
+            $this->markers->remove($index);
+        }
+    }
+
+    /**
+     * Clear all markers
+     */
+    public function clearMarkers(): void
+    {
+        $this->markers = null;
+        $this->marker = null;
+        $this->latitude = null;
+        $this->longitude = null;
+    }
+
+    /**
+     * Get markers data for rendering in the view
+     */
+    public function getMarkersDataProperty(): array
+    {
+        if ($this->isMultiMarkerMode()) {
+            return $this->markers->render();
+        }
+
+        if ($this->hasSingleMarker()) {
+            return [$this->marker->render()];
+        }
+
+        // Legacy mode: single marker from lat/lng
+        if ($this->hasCoordinates) {
+            return [[
+                'lat' => $this->latitude,
+                'lng' => $this->longitude,
+                'label' => null,
+                'tooltip' => null,
+                'icon' => null,
+                'iconColor' => null,
+                'options' => [],
+            ]];
+        }
+
+        return [];
+    }
+
+    /**
      * Render the component view.
      *
      * @return \Illuminate\Contracts\View\View
      */
     public function render()
     {
-        return View::make('lbcdev-map::map-component');
+        return View::make('livewire-maps::livewire-map');
     }
 }
