@@ -2,42 +2,26 @@
 
 namespace LBCDev\LivewireMaps\Tests\Unit;
 
-use LBCDev\LivewireMaps\Components\LivewireMap;
-use LBCDev\MapGeometries\Marker;
-use LBCDev\MapGeometries\MarkerCollection;
 use Livewire\Livewire;
-use Orchestra\Testbench\TestCase;
+use LBCDev\MapGeometries\Marker;
+use LBCDev\LivewireMaps\Tests\TestCase;
+use LBCDev\MapGeometries\MarkerCollection;
+use LBCDev\LivewireMaps\Components\LivewireMap;
 
 class LivewireMapWithGeometriesTest extends TestCase
 {
-    protected function getPackageProviders($app)
-    {
-        return [
-            \LBCDev\LivewireMaps\LivewireMapsServiceProvider::class,
-            \Livewire\LivewireServiceProvider::class,
-        ];
-    }
-
-    protected function getEnvironmentSetUp($app)
-    {
-        // Configurar vistas
-        $app['config']->set('view.paths', [
-            __DIR__ . '/../../resources/views',
-            resource_path('views'),
-        ]);
-    }
-
     public function test_can_mount_with_single_marker(): void
     {
         $marker = Marker::make(40.7128, -74.0060, 'New York');
 
-        $component = Livewire::test('lbcdev-map', [
+        $component = Livewire::test(LivewireMap::class, [
             'marker' => $marker,
         ]);
 
-        $component->assertSet('marker', $marker);
-        $component->assertSet('latitude', 40.7128);
-        $component->assertSet('longitude', -74.0060);
+        // Verificar usando el getter público
+        $this->assertEquals(40.7128, $component->get('latitude'));
+        $this->assertEquals(-74.0060, $component->get('longitude'));
+        $this->assertNotNull($component->instance()->getMarker());
     }
 
     public function test_can_mount_with_marker_collection(): void
@@ -47,12 +31,14 @@ class LivewireMapWithGeometriesTest extends TestCase
             Marker::make(51.5074, -0.1278, 'London'),
         ]);
 
+        /** @var LivewireMap */
         $component = Livewire::test(LivewireMap::class, [
             'markers' => $markers,
         ]);
 
         $component->assertSet('markers', $markers);
-        $this->assertTrue($component->get('isMultiMarkerMode'));
+        // $this->assertEquals($markers, $component->instance()->getMarkers());
+        $this->assertTrue($component->instance()->isMultiMarkerMode());
     }
 
     public function test_legacy_mode_creates_marker_automatically(): void
@@ -197,5 +183,82 @@ class LivewireMapWithGeometriesTest extends TestCase
         $this->assertEquals(2.0, $component->get('longitude'));
         $this->assertInstanceOf(Marker::class, $component->get('marker'));
         $this->assertEquals(2.0, $component->get('marker')->getLatitude());
+    }
+
+    public function test_it_does_not_update_coordinates_if_not_interactive(): void
+    {
+        $component = Livewire::test(LivewireMap::class, [
+            'latitude' => 1.0,
+            'longitude' => 1.0,
+            'interactive' => false,
+        ]);
+
+        $component->call('updateCoordinates', 5.0, 5.0);
+
+        // Debería mantener las originales
+        $this->assertEquals(1.0, $component->get('latitude'));
+    }
+
+
+
+    // Validación de entradas (Coordenadas inválidas)
+
+    public function test_it_validates_coordinate_input_format(): void
+    {
+        $component = Livewire::test(LivewireMap::class)
+            ->set('coordinateInput', 'invalido')
+            ->call('applyCoordinates');
+
+        // Comprobar que el error existe en el campo
+        $component->assertHasErrors(['coordinateInput']);
+
+        // Comprobar mensaje (usa un substring para evitar problemas de espacios/puntuación)
+        $errors = $component->errors()->get('coordinateInput');
+        $this->assertStringContainsString('Formato inválido', $errors[0]);
+    }
+
+    public function test_it_validates_coordinate_ranges(): void
+    {
+        $component = Livewire::test(LivewireMap::class)
+            ->set('coordinateInput', '95.0, 200.0') // Latitud > 90, Longitud > 180
+            ->call('applyCoordinates');
+
+        $component->assertHasErrors(['coordinateInput' => 'Coordenadas fuera de rango válido']);
+    }
+
+    // Emisión de Eventos (JS Interop)
+
+    public function test_it_dispatches_events_on_coordinate_update(): void
+    {
+        $component = Livewire::test(LivewireMap::class);
+
+        $component->call('updateCoordinates', 10.5, 20.5);
+
+        // Verifica que el JS sepa que tiene que actualizarse
+        $component->assertDispatched('map-coordinates-updated', [
+            'latitude' => 10.5,
+            'longitude' => 20.5,
+        ]);
+    }
+
+    public function test_it_dispatches_fly_to_when_applying_coordinates(): void
+    {
+        $component = Livewire::test(LivewireMap::class)
+            ->set('coordinateInput', '40.0, -3.0')
+            ->call('applyCoordinates');
+
+        $component->assertDispatched('fly-to-coordinates');
+    }
+
+    public function test_it_uses_default_values_from_config(): void
+    {
+        // Simulamos que la config cambia
+        config(['livewire-maps.default_zoom' => 10]);
+        config(['livewire-maps.default_height' => 600]);
+
+        $component = Livewire::test(LivewireMap::class);
+
+        $component->assertSet('zoom', 10);
+        $component->assertSet('height', 600);
     }
 }

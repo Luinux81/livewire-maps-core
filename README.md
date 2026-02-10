@@ -1,29 +1,33 @@
-# Livewire Map Component
+# Livewire Maps Core
 
-Un componente Livewire flexible e interactivo para mapas usando Leaflet.js.
+Un componente Livewire flexible e interactivo para mapas usando Leaflet.js con soporte completo para geometrías.
 
 ## Características
 
 - 🗺️ Mapas interactivos con Leaflet.js
-- 📍 Marcadores arrastrables
+- 📍 Soporte para Markers individuales y colecciones
 - 🎯 Click en el mapa para colocar marcadores
 - 📋 Entrada manual de coordenadas
 - 🎨 Soporte para modo claro/oscuro
 - 🔒 Modo de solo lectura opcional
 - ⚡ Eventos Livewire para integración con otros componentes
+- 🔧 Configuración centralizada
+- 🧩 Integración con `lbcdev/map-geometries`
+- 🔄 Retrocompatibilidad con modo legacy (lat/lng)
 
 ## Requisitos
 
 - PHP 8.1 o superior
-- Laravel 10.x o superior
+- Laravel 10.x, 11.x o 12.x
 - Livewire 3.x
+- `lbcdev/map-geometries` (instalado automáticamente)
 
 ## Instalación
 
 ### 1. Instalar el paquete via Composer
 
 ```bash
-composer require lbcdev/livewire-map-component
+composer require lbcdev/livewire-maps-core
 ```
 
 ### 2. Incluir Leaflet.js en tu layout
@@ -38,49 +42,85 @@ Agrega estos scripts en el `<head>` de tu layout principal (antes de `@livewireS
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 ```
 
-### 3. (Opcional) Publicar las vistas
+### 3. (Opcional) Publicar configuración y vistas
 
-Si deseas personalizar las vistas del componente:
+Publicar configuración:
 
 ```bash
-php artisan vendor:publish --tag=lbcdev-map-views
+php artisan vendor:publish --tag=livewire-maps-config
 ```
 
-Las vistas se publicarán en `resources/views/vendor/lbcdev-map/`.
+Publicar vistas:
+
+```bash
+php artisan vendor:publish --tag=livewire-maps-views
+```
+
+Las vistas se publicarán en `resources/views/vendor/livewire-maps/`.
 
 ## Uso Básico
 
-### Uso simple
+### Modo Simple (sin coordenadas)
 
 ```blade
-<livewire:lbcdev-map />
+<livewire:livewire-map />
 ```
 
-### Con coordenadas iniciales
+### Modo Legacy (coordenadas directas)
 
 ```blade
-<livewire:lbcdev-map 
-    :latitude="40.416775" 
-    :longitude="-3.703790" 
+<livewire:livewire-map
+    :latitude="40.416775"
+    :longitude="-3.703790"
 />
 ```
 
-### Modo de solo lectura
+### Modo Geometrías (recomendado)
 
 ```blade
-<livewire:lbcdev-map 
-    :latitude="40.416775" 
+@php
+use LBCDev\MapGeometries\Marker;
+
+$marker = Marker::make(40.416775, -3.703790)
+    ->label('Madrid')
+    ->tooltip('Capital de España');
+@endphp
+
+<livewire:livewire-map :marker="$marker" />
+```
+
+### Múltiples Marcadores
+
+```blade
+@php
+use LBCDev\MapGeometries\Marker;
+use LBCDev\MapGeometries\MarkerCollection;
+
+$markers = MarkerCollection::make([
+    Marker::make(40.416775, -3.703790)->label('Madrid'),
+    Marker::make(41.385064, 2.173404)->label('Barcelona'),
+    Marker::make(39.469907, -0.376288)->label('Valencia'),
+]);
+@endphp
+
+<livewire:livewire-map :markers="$markers" />
+```
+
+### Modo de Solo Lectura
+
+```blade
+<livewire:livewire-map
+    :latitude="40.416775"
     :longitude="-3.703790"
     :interactive="false"
 />
 ```
 
-### Con todas las opciones
+### Con Todas las Opciones
 
 ```blade
-<livewire:lbcdev-map 
-    :latitude="40.416775" 
-    :longitude="-3.703790"
+<livewire:livewire-map
+    :marker="$marker"
     :interactive="true"
     :showLabel="true"
     :showPasteButton="true"
@@ -92,14 +132,44 @@ Las vistas se publicarán en `resources/views/vendor/lbcdev-map/`.
 ## Propiedades
 
 | Propiedad | Tipo | Default | Descripción |
-| --------- | ---- | ------- | ----------- |-------------|
-| `latitude` | `?float` | `null` | Latitud inicial del marcador |
-| `longitude` | `?float` | `?null` | Longitud inicial del marcador |
-| `interactive` | `bool` | `true` | Permite interacción con el mapa |
-| `showLabel` | `bool` | `true` | Muestra etiqueta con coordenadas |
-| `showPasteButton` | `bool` | `false` | Muestra botón para pegar coordenadas |
-| `height` | `int` | `400` | Altura del mapa en píxeles |
-| `zoom` | `int` | `15` | Nivel de zoom inicial |
+| --------- | ---- | ------- | ----------- |
+| `latitude` | `?float` | `null` | Latitud inicial (modo legacy) |
+| `longitude` | `?float` | `null` | Longitud inicial (modo legacy) |
+| `marker` | `?Marker` | `null` | Marcador individual (modo geometrías) |
+| `markers` | `?MarkerCollection` | `null` | Colección de marcadores (modo multi-marker) |
+| `interactive` | `?bool` | `true` | Permite interacción con el mapa |
+| `showLabel` | `?bool` | `true` | Muestra etiqueta con coordenadas |
+| `showPasteButton` | `?bool` | `false` | Muestra botón para pegar coordenadas |
+| `height` | `?int` | `400` | Altura del mapa en píxeles |
+| `zoom` | `?int` | `15` | Nivel de zoom inicial |
+
+> **Nota:** Todos los valores por defecto se pueden configurar en `config/livewire-maps.php`
+
+## Configuración
+
+El archivo de configuración `config/livewire-maps.php` permite personalizar los valores por defecto:
+
+```php
+return [
+    // Coordenadas por defecto cuando no se especifican
+    'default_latitude' => 36.9990019,
+    'default_longitude' => -6.5478919,
+    'default_zoom' => 15,
+    'default_height' => 400,
+
+    // Configuración del tile layer (OpenStreetMap por defecto)
+    'tile_layer' => [
+        'url' => 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+        'attribution' => '© OpenStreetMap contributors',
+        'max_zoom' => 19,
+    ],
+
+    // Comportamiento por defecto de los componentes
+    'interactive' => true,
+    'show_label' => true,
+    'show_paste_button' => false,
+];
+```
 
 ## Integración con Formularios
 
@@ -111,12 +181,14 @@ Las vistas se publicarán en `resources/views/vendor/lbcdev-map/`.
 namespace App\Livewire;
 
 use Livewire\Component;
+use LBCDev\MapGeometries\Marker;
 
 class CreateLocation extends Component
 {
     public $name;
     public $latitude;
     public $longitude;
+    public ?Marker $marker = null;
 
     protected $listeners = ['map-coordinates-updated' => 'updateMapCoordinates'];
 
@@ -124,6 +196,9 @@ class CreateLocation extends Component
     {
         $this->latitude = $data['latitude'];
         $this->longitude = $data['longitude'];
+
+        // Actualizar el marker
+        $this->marker = Marker::make($this->latitude, $this->longitude);
     }
 
     public function save()
@@ -157,8 +232,8 @@ class CreateLocation extends Component
 
         <div class="mb-4">
             <label class="block mb-2">Ubicación en el mapa</label>
-            <livewire:lbcdev-map 
-                :latitude="$latitude" 
+            <livewire:livewire-map
+                :latitude="$latitude"
                 :longitude="$longitude"
                 :showPasteButton="true"
             />
@@ -171,6 +246,52 @@ class CreateLocation extends Component
         </button>
     </form>
 </div>
+```
+
+## API del Componente
+
+### Métodos Públicos
+
+```php
+// Verificar si está en modo multi-marker
+$component->isMultiMarkerMode(): bool
+
+// Verificar si tiene un marcador único
+$component->hasSingleMarker(): bool
+
+// Obtener el marcador actual
+$component->getMarker(): ?Marker
+
+// Obtener la colección de marcadores
+$component->getMarkers(): ?MarkerCollection
+
+// Añadir un marcador (cambia a modo multi-marker)
+$component->addMarker(Marker $marker): void
+
+// Eliminar un marcador por índice
+$component->removeMarker(int $index): void
+
+// Limpiar todos los marcadores
+$component->clearMarkers(): void
+
+// Actualizar coordenadas (solo en modo interactivo)
+$component->updateCoordinates(float $lat, float $lng): void
+```
+
+### Propiedades Computadas
+
+```php
+// Latitud a mostrar (usa default si es null)
+$component->displayLatitude: float
+
+// Longitud a mostrar (usa default si es null)
+$component->displayLongitude: float
+
+// Verifica si tiene coordenadas válidas
+$component->hasCoordinates: bool
+
+// Datos de markers para renderizar
+$component->markersData: array
 ```
 
 ## Eventos
@@ -209,30 +330,64 @@ El componente utiliza clases de Tailwind CSS. Puedes personalizar los estilos pu
 
 ### Coordenadas por defecto
 
-Por defecto, si no se proporcionan coordenadas, el mapa se centrará en:
+Las coordenadas por defecto se configuran en `config/livewire-maps.php`:
 
-- Latitud: 36.9990019
-- Longitud: -6.5478919
-
-Puedes modificar estas coordenadas editando las constantes en el componente después de publicar las vistas.
+```php
+'default_latitude' => 36.9990019,
+'default_longitude' => -6.5478919,
+```
 
 ## Ejemplos Avanzados
 
-### Selector de ubicación para direcciones
+### Trabajando con Markers Personalizados
+
+```blade
+@php
+use LBCDev\MapGeometries\Marker;
+
+$marker = Marker::make(40.416775, -3.703790)
+    ->label('Oficina Central')
+    ->tooltip('Haz clic para más información')
+    ->icon('custom-icon')
+    ->iconColor('#FF5733')
+    ->metadata(['id' => 1, 'type' => 'office']);
+@endphp
+
+<livewire:livewire-map :marker="$marker" />
+```
+
+### Mapa con Múltiples Ubicaciones
+
+```blade
+@php
+use LBCDev\MapGeometries\Marker;
+use LBCDev\MapGeometries\MarkerCollection;
+
+$offices = MarkerCollection::make([
+    Marker::make(40.416775, -3.703790)->label('Madrid')->tooltip('Oficina Principal'),
+    Marker::make(41.385064, 2.173404)->label('Barcelona')->tooltip('Oficina Norte'),
+    Marker::make(39.469907, -0.376288)->label('Valencia')->tooltip('Oficina Este'),
+]);
+@endphp
+
+<livewire:livewire-map :markers="$offices" :height="600" />
+```
+
+### Selector de Ubicación para Direcciones
 
 ```blade
 <div>
     <div class="mb-4">
-        <input 
-            type="text" 
-            placeholder="Buscar dirección..." 
+        <input
+            type="text"
+            placeholder="Buscar dirección..."
             wire:model.live="searchAddress"
             class="w-full px-3 py-2 border rounded"
         >
     </div>
 
-    <livewire:lbcdev-map 
-        :latitude="$latitude" 
+    <livewire:livewire-map
+        :latitude="$latitude"
         :longitude="$longitude"
         :showPasteButton="true"
         :height="500"
@@ -240,14 +395,14 @@ Puedes modificar estas coordenadas editando las constantes en el componente desp
 </div>
 ```
 
-### Múltiples mapas en una página
+### Múltiples Mapas en una Página
 
 ```blade
 <div class="grid grid-cols-2 gap-4">
     <div>
         <h3 class="mb-2">Ubicación de origen</h3>
-        <livewire:lbcdev-map 
-            :latitude="$originLat" 
+        <livewire:livewire-map
+            :latitude="$originLat"
             :longitude="$originLng"
             wire:key="origin-map"
         />
@@ -255,8 +410,8 @@ Puedes modificar estas coordenadas editando las constantes en el componente desp
 
     <div>
         <h3 class="mb-2">Ubicación de destino</h3>
-        <livewire:lbcdev-map 
-            :latitude="$destLat" 
+        <livewire:livewire-map
+            :latitude="$destLat"
             :longitude="$destLng"
             wire:key="destination-map"
         />
@@ -264,124 +419,98 @@ Puedes modificar estas coordenadas editando las constantes en el componente desp
 </div>
 ```
 
-## Desarrollo y Contribución
+### Añadir Marcadores Dinámicamente
 
-### Publicar una nueva versión
+```php
+<?php
 
-Para publicar una nueva versión del paquete en GitHub y Packagist, sigue estos pasos:
+namespace App\Livewire;
 
-#### 1. Actualizar el código
+use Livewire\Component;
+use LBCDev\MapGeometries\Marker;
+use LBCDev\MapGeometries\MarkerCollection;
 
-Realiza todos los cambios necesarios y asegúrate de que todo funciona correctamente.
+class DynamicMarkers extends Component
+{
+    public ?MarkerCollection $markers = null;
 
-#### 2. Actualizar el CHANGELOG (opcional pero recomendado)
+    public function mount()
+    {
+        $this->markers = MarkerCollection::make();
+    }
 
-Documenta los cambios en un archivo `CHANGELOG.md`:
+    public function addLocation($lat, $lng, $label)
+    {
+        $marker = Marker::make($lat, $lng)->label($label);
+        $this->markers->add($marker);
+    }
 
-```markdown
-## [1.0.1] - 2026-01-03
-
-### Fixed
-- Corregidos errores de namespace en funciones helper de Laravel
-- Mejorada compatibilidad con IDEs
-
-### Added
-- Documentación para publicación de versiones
+    public function render()
+    {
+        return view('livewire.dynamic-markers');
+    }
+}
 ```
 
-#### 3. Commit de los cambios
+## Estructura del Paquete
 
-```bash
-git add .
-git commit -m "Fix: Corregidos errores de namespace y mejorada documentación"
+```shell
+packages/core/
+├── config/
+│   └── livewire-maps.php          # Configuración del paquete
+├── resources/
+│   └── views/
+│       └── livewire-map.blade.php # Vista del componente
+├── src/
+│   ├── Components/
+│   │   └── LivewireMap.php        # Componente principal
+│   └── LivewireMapsServiceProvider.php
+└── tests/
+    ├── Feature/
+    └── Unit/
+        └── LivewireMapWithGeometriesTest.php
 ```
 
-#### 4. Crear un tag con la versión
+## Namespace y Clases
+
+- **Namespace principal:** `LBCDev\LivewireMaps`
+- **Componente:** `LBCDev\LivewireMaps\Components\LivewireMap`
+- **ServiceProvider:** `LBCDev\LivewireMaps\LivewireMapsServiceProvider`
+- **Namespace de vistas:** `livewire-maps`
+
+## Testing
+
+El paquete incluye tests completos:
 
 ```bash
-# Crear tag anotado (recomendado)
-git tag -a v1.0.1 -m "Versión 1.0.1 - Correcciones de namespace"
-
-# O crear tag simple
-git tag v1.0.1
+cd packages/core
+composer test
 ```
 
-#### 5. Subir los cambios y el tag a GitHub
+## Compatibilidad
 
-```bash
-# Subir commits
-git push origin main
+### Modo Legacy
 
-# Subir el tag
-git push origin v1.0.1
+El componente mantiene retrocompatibilidad con el uso de `latitude` y `longitude` directos:
 
-# O subir todos los tags a la vez
-git push origin --tags
+```blade
+<livewire:livewire-map :latitude="40.416775" :longitude="-3.703790" />
 ```
 
-#### 6. Crear un Release en GitHub (opcional)
+### Modo Geometrías (Recomendado)
 
-1. Ve a tu repositorio en GitHub
-2. Click en "Releases" → "Create a new release"
-3. Selecciona el tag que acabas de crear (v1.0.1)
-4. Añade un título: "v1.0.1 - Correcciones de namespace"
-5. Describe los cambios en el release
-6. Click en "Publish release"
+Usa objetos `Marker` y `MarkerCollection` para mayor flexibilidad:
 
-#### 7. Actualización automática en Packagist
-
-Si tu paquete está registrado en Packagist con el webhook de GitHub configurado, se actualizará automáticamente. Si no:
-
-1. Ve a [packagist.org](https://packagist.org)
-2. Busca tu paquete
-3. Click en "Update" para forzar la actualización
-
-### Versionado Semántico
-
-Este paquete sigue [Semantic Versioning](https://semver.org/):
-
-- **MAJOR** (1.x.x): Cambios incompatibles con versiones anteriores
-- **MINOR** (x.1.x): Nueva funcionalidad compatible con versiones anteriores
-- **PATCH** (x.x.1): Correcciones de bugs compatibles con versiones anteriores
-
-Ejemplos:
-
-```bash
-git tag -a v1.0.0 -m "Primera versión estable"
-git tag -a v1.1.0 -m "Nueva característica: soporte para múltiples marcadores"
-git tag -a v1.1.1 -m "Corrección: error en validación de coordenadas"
-git tag -a v2.0.0 -m "Breaking change: nueva API para eventos"
-```
-
-### Ver tags existentes
-
-```bash
-# Listar todos los tags
-git tag
-
-# Listar tags con sus mensajes
-git tag -n
-
-# Ver detalles de un tag específico
-git show v1.0.1
-```
-
-### Eliminar un tag (si cometiste un error)
-
-```bash
-# Eliminar tag local
-git tag -d v1.0.1
-
-# Eliminar tag remoto
-git push origin --delete v1.0.1
+```blade
+<livewire:livewire-map :marker="$marker" />
 ```
 
 ## Soporte
 
 Si encuentras algún problema o tienes sugerencias:
 
-- 🐛 [Reportar un bug](https://github.com/Luinux81/livewire-lbcdev-component-map/issues)
-- 💡 [Solicitar una característica](https://github.com/Luinux81/livewire-lbcdev-component-map/issues)
+- 🐛 [Reportar un bug](https://github.com/Luinux81/livewire-maps-core/issues)
+- 💡 [Solicitar una característica](https://github.com/Luinux81/livewire-maps-core/issues)
 
 ## Licencia
 
@@ -389,6 +518,7 @@ Este paquete es software de código abierto licenciado bajo la [Licencia MIT](LI
 
 ## Créditos
 
-- Desarrollado por [Tu Nombre](https://github.com/Luinux81)
+- Desarrollado por [LBCDev](https://github.com/Luinux81)
 - Utiliza [Leaflet.js](https://leafletjs.com/) para los mapas
 - Construido con [Livewire](https://livewire.laravel.com/)
+- Integración con [lbcdev/map-geometries](https://github.com/Luinux81/map-geometries)

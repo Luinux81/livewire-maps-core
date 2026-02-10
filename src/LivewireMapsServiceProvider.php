@@ -34,6 +34,6 @@ class LivewireMapsServiceProvider extends ServiceProvider
         }
 
         // Cargar vistas
-        $this->loadViewsFrom(__DIR__ . '/../resources/views', 'lbcdev-map');
+        $this->loadViewsFrom(__DIR__ . '/../resources/views', 'livewire-maps');
     }
 }
