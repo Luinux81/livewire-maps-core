@@ -131,59 +131,17 @@ $markers = MarkerCollection::make([
 
 ## Propiedades
 
-### Latitude
-
-- **Tipo:** `?float`
-- **Default:** `null`
-- **Descripción:** Latitud inicial (modo legacy)
-
-### Longitude
-
-- **Tipo:** `?float`
-- **Default:** `null`
-- **Descripción:** Longitud inicial (modo legacy)
-
-### Marker
-
-- **Tipo:** `?Marker`
-- **Default:** `null`
-- **Descripción:** Marcador individual (modo geometrías)
-
-### Markers
-
-- **Tipo:** `?MarkerCollection`
-- **Default:** `null`
-- **Descripción:** Colección de marcadores (modo multi-marker)
-
-### Interactive
-
-- **Tipo:** `?bool`
-- **Default:** `true`
-- **Descripción:** Permite interacción con el mapa
-
-### ShowLabel
-
-- **Tipo:** `?bool`
-- **Default:** `true`
-- **Descripción:** Muestra etiqueta con coordenadas
-
-### ShowPasteButton
-
-- **Tipo:** `?bool`
-- **Default:** `false`
-- **Descripción:** Muestra botón para pegar coordenadas
-
-### Height
-
-- **Tipo:** `?int`
-- **Default:** `400`
-- **Descripción:** Altura del mapa en píxeles
-
-### Zoom
-
-- **Tipo:** `?int`
-- **Default:** `15`
-- **Descripción:** Nivel de zoom inicial
+| Propiedad | Tipo | Default | Descripción |
+| --------- | ---- | ------- | ----------- |
+| `latitude` | `?float` | `null` | Latitud inicial (modo legacy) |
+| `longitude` | `?float` | `null` | Longitud inicial (modo legacy) |
+| `marker` | `?Marker` | `null` | Marcador individual (modo geometrías) |
+| `markers` | `?MarkerCollection` | `null` | Colección de marcadores (modo multi-marker) |
+| `interactive` | `?bool` | `true` | Permite interacción con el mapa |
+| `showLabel` | `?bool` | `true` | Muestra etiqueta con coordenadas |
+| `showPasteButton` | `?bool` | `false` | Muestra botón para pegar coordenadas |
+| `height` | `?int` | `400` | Altura del mapa en píxeles |
+| `zoom` | `?int` | `15` | Nivel de zoom inicial |
 
 > **Nota:** Todos los valores por defecto se pueden configurar en `config/livewire-maps.php`
 
