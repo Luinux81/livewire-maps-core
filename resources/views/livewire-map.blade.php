@@ -71,7 +71,7 @@
     @endif
 
     {{-- Contenedor del mapa --}}
-    <div class="border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm overflow-hidden relative" wire:ignore>
+    <div class="border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm overflow-hidden relative" style="position: relative; z-index: 0;" wire:ignore>
         <div
             x-ref="mapContainer"
             class="w-full"
