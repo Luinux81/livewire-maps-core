@@ -18,8 +18,8 @@ class LivewireMapsServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
-        // Registrar componentes Livewire (sin alias para autodescubrimiento)
-        Livewire::component(LivewireMap::class, LivewireMap::class);
+        // Registrar componentes Livewire con alias explícito
+        Livewire::component('livewire-map', LivewireMap::class);
 
         // Publicar configuración
         if ($this->app->runningInConsole()) {
