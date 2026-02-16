@@ -160,6 +160,20 @@ Alpine.data('mapComponentAlpine', (config) => ({
 
         // Crear markers
         markersData.forEach((markerData) => {
+            // --- LÓGICA DE COLOR ---
+            const color = markerData.iconColor || '#3b82f6'; // Color por defecto (blue-500)
+            
+            // Creamos un icono SVG dinámico
+            const customIcon = L.divIcon({
+                className: 'custom-div-icon',
+                html: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="${color}" class="w-8 h-8 shadow-lg">
+                        <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 0 1 0-5 2.5 2.5 0 0 1 0 5z"/>
+                    </svg>`,
+                iconSize: [32, 32],
+                iconAnchor: [16, 32], // La punta del pin queda en el centro inferior
+                popupAnchor: [0, -32]
+            });
+
             const marker = L.marker([markerData.lat, markerData.lng], {
                 draggable: false,
                 ...markerData.options
