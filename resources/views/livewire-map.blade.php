@@ -176,6 +176,7 @@ Alpine.data('mapComponentAlpine', (config) => ({
 
             const marker = L.marker([markerData.lat, markerData.lng], {
                 draggable: false,
+                icon: customIcon,
                 ...markerData.options
             });
 
