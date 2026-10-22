@@ -2,9 +2,10 @@ name: Tests
 
 on:
   push:
-    branches: [ main ]
+    branches: []
   pull_request:
-    branches: [ main ]
+    branches: []
+  workflow_dispatch:
 
 jobs:
   test:
@@ -13,7 +14,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        php: [8.2, 8.3]
+        php: [8.3]
         dependency-version: [prefer-stable]
 
     name: PHP ${{ matrix.php }} - ${{ matrix.dependency-version }}

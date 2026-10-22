@@ -21,7 +21,7 @@ A Livewire component for interactive maps with Leaflet.js integration. Core pack
 ## Requirements
 
 - PHP 8.1 or higher
-- Laravel 10.x or 11.x
+- Laravel 10.x to 13.x
 - Livewire 3.x
 - [lbcdev/map-geometries](https://github.com/Luinux81/map-geometries)
 
