@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Support for Laravel 13 (`illuminate/support ^13.0`; Testbench `^11` in require-dev)
+
 ## [1.0.0] - 2026-02-16
 
 ### Added
