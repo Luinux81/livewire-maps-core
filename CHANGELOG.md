@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-10-22
+
 ### Added
 
 - Support for Laravel 13 (`illuminate/support ^13.0`; Testbench `^11` in require-dev)
@@ -71,5 +73,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Event emission tests
 - Coordinate validation tests
 
-[Unreleased]: https://github.com/Luinux81/livewire-maps-core/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/Luinux81/livewire-maps-core/compare/v1.1.0...HEAD
+[1.1.0]: https://github.com/Luinux81/livewire-maps-core/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/Luinux81/livewire-maps-core/releases/tag/v1.0.0
